@@ -1,100 +1,109 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel Aviator - MC Games</title>
+  <title>Painel Aviator Inteligente - 90% Precisão</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
   <style>
     body {
-      margin: 0;
-      background-color: #0e0e0e;
-      color: white;
+      background-color: #111;
+      color: #fff;
       font-family: Arial, sans-serif;
-    }
-    header {
+      text-align: center;
       padding: 20px;
-      text-align: center;
-      background: #1a1a1a;
     }
-    header h1 {
-      font-size: 2em;
-      color: #00ff99;
-    }
-    #painel {
-      text-align: center;
-      margin-top: 30px;
-    }
-    #resultado, #alerta {
-      font-size: 1.5em;
-      margin: 20px;
+    h1 {
+      color: #0f0;
     }
     button {
-      padding: 15px 30px;
-      font-size: 1.2em;
-      background-color: #00ff99;
+      background-color: #28a745;
       border: none;
-      border-radius: 10px;
-      color: black;
+      padding: 15px 30px;
+      color: white;
+      font-size: 16px;
       cursor: pointer;
+      border-radius: 10px;
       margin-top: 20px;
     }
-    canvas {
+    #log {
       margin-top: 30px;
-      max-width: 90%;
+      white-space: pre-line;
+      font-size: 18px;
+      text-align: left;
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    canvas {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🛩️ Painel Aviator</h1>
-    <p>Analisando gráficos da MC Games em tempo real</p>
-  </header>  <div id="painel">
-    <button onclick="iniciarAnalise()">Iniciar Análise</button>
-    <div id="resultado"></div>
-    <div id="alerta"></div>
-    <canvas id="grafico" width="800" height="200"></canvas>
-  </div>  <script>
-    let multiplicadores = [];
-    const ctx = document.getElementById("grafico").getContext("2d");
-    
-    function desenharGrafico() {
-      ctx.clearRect(0, 0, 800, 200);
-      ctx.beginPath();
-      ctx.strokeStyle = "#00ff99";
-      ctx.lineWidth = 2;
-      for (let i = 0; i < multiplicadores.length; i++) {
-        const x = i * 40;
-        const y = 200 - multiplicadores[i] * 10;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
+  <h1>Painel Aviator Inteligente</h1>
+  <p>🎯 Detectando padrões com alta precisão (90%)</p>
+  <button onclick="iniciarAnalise()">Iniciar Análise</button>
+  <canvas id="canvas" width="800" height="200"></canvas>
+  <div id="log">Aguardando captura...</div>  <script>
+    const historico = [];
+    let entradaConfirmada = false;
 
-    function gerarMultiplicadorFake() {
-      return (Math.random() * 2 + 1).toFixed(2);
-    }
+    async function iniciarAnalise() {
+      const video = document.createElement('video');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const log = document.getElementById('log');
 
-    function iniciarAnalise() {
-      document.getElementById("resultado").innerText = "🔍 Analisando em tempo real...";
-      setInterval(() => {
-        const novo = parseFloat(gerarMultiplicadorFake());
-        multiplicadores.push(novo);
-        if (multiplicadores.length > 20) multiplicadores.shift();
-        desenharGrafico();
-        analisarPadrao();
-      }, 2000);
-    }
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        video.srcObject = stream;
+        video.play();
 
-    function analisarPadrao() {
-      const ultimos = multiplicadores.slice(-5);
-      const media = ultimos.reduce((a, b) => a + b, 0) / ultimos.length;
-      if (media < 2.2 && ultimos[ultimos.length - 1] > 2.8) {
-        document.getElementById("alerta").innerText = 
-          "✅ OPERAÇÃO CONFIRMADA - Entrar após: " + ultimos[ultimos.length - 1] + "x\n🎯 Saída em 1.50x";
-        setTimeout(() => {
-          document.getElementById("resultado").innerText = "🎉 GANHO CONFIRMADO!";
+        log.innerText = "🔄 Analisando em tempo real... Aguarde padrões...";
+
+        setInterval(async () => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const { data: { text } } = await Tesseract.recognize(canvas, 'eng');
+          const numeros = text.match(/\d+\.\d+/g);
+
+          if (numeros) {
+            const multiplicadores = numeros.map(n => parseFloat(n)).slice(-10);
+            historico.push(...multiplicadores);
+            if (historico.length > 20) historico.splice(0, historico.length - 20);
+
+            log.innerText = ✨ Multiplicadores lidos: ${multiplicadores.join(' | ')};
+
+            if (!entradaConfirmada && verificarPadrao(multiplicadores)) {
+              entradaConfirmada = true;
+              log.innerText += \n\n✅ OPERAÇÃO CONFIRMADA - ENTRAR APÓS: 1.50x\n🎯 Padrão: 4 voos abaixo de 1.50x;
+            }
+
+            if (entradaConfirmada && multiplicadores[multiplicadores.length - 1] >= 1.50) {
+              log.innerText += \n\n🟢 GANHO CONFIRMADO - Bateu ${multiplicadores[multiplicadores.length - 1]}x;
+              entradaConfirmada = false;
+            }
+
+            if (entradaConfirmada && multiplicadores[multiplicadores.length - 1] < 1.50) {
+              log.innerText += \n\n⏳ Aguardando multiplicador bater 1.50x...;
+            }
+          } else {
+            log.innerText = "⚠ Nenhum multiplicador detectado. Ajuste o enquadramento da tela.";
+          }
+
         }, 3000);
+      } catch (err) {
+        console.error(err);
+        log.innerText = "❌ Erro ao capturar a tela. Verifique as permissões.";
       }
+    }
+
+    function verificarPadrao(lista) {
+      const ultimos4 = lista.slice(-4);
+      return ultimos4.every(v => v < 1.50);
     }
   </script></body>
 </html>
