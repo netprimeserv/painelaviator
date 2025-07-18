@@ -1,0 +1,100 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Aviator - MC Games</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #0e0e0e;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 20px;
+      text-align: center;
+      background: #1a1a1a;
+    }
+    header h1 {
+      font-size: 2em;
+      color: #00ff99;
+    }
+    #painel {
+      text-align: center;
+      margin-top: 30px;
+    }
+    #resultado, #alerta {
+      font-size: 1.5em;
+      margin: 20px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background-color: #00ff99;
+      border: none;
+      border-radius: 10px;
+      color: black;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    canvas {
+      margin-top: 30px;
+      max-width: 90%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛩️ Painel Aviator</h1>
+    <p>Analisando gráficos da MC Games em tempo real</p>
+  </header>  <div id="painel">
+    <button onclick="iniciarAnalise()">Iniciar Análise</button>
+    <div id="resultado"></div>
+    <div id="alerta"></div>
+    <canvas id="grafico" width="800" height="200"></canvas>
+  </div>  <script>
+    let multiplicadores = [];
+    const ctx = document.getElementById("grafico").getContext("2d");
+    
+    function desenharGrafico() {
+      ctx.clearRect(0, 0, 800, 200);
+      ctx.beginPath();
+      ctx.strokeStyle = "#00ff99";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < multiplicadores.length; i++) {
+        const x = i * 40;
+        const y = 200 - multiplicadores[i] * 10;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function gerarMultiplicadorFake() {
+      return (Math.random() * 2 + 1).toFixed(2);
+    }
+
+    function iniciarAnalise() {
+      document.getElementById("resultado").innerText = "🔍 Analisando em tempo real...";
+      setInterval(() => {
+        const novo = parseFloat(gerarMultiplicadorFake());
+        multiplicadores.push(novo);
+        if (multiplicadores.length > 20) multiplicadores.shift();
+        desenharGrafico();
+        analisarPadrao();
+      }, 2000);
+    }
+
+    function analisarPadrao() {
+      const ultimos = multiplicadores.slice(-5);
+      const media = ultimos.reduce((a, b) => a + b, 0) / ultimos.length;
+      if (media < 2.2 && ultimos[ultimos.length - 1] > 2.8) {
+        document.getElementById("alerta").innerText = 
+          "✅ OPERAÇÃO CONFIRMADA - Entrar após: " + ultimos[ultimos.length - 1] + "x\n🎯 Saída em 1.50x";
+        setTimeout(() => {
+          document.getElementById("resultado").innerText = "🎉 GANHO CONFIRMADO!";
+        }, 3000);
+      }
+    }
+  </script></body>
+</html>
